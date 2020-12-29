@@ -1,0 +1,131 @@
+RTR454_GIANGDUONG_2800#show run
+Building configuration...
+
+Current configuration : 2426 bytes
+!
+version 12.4
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+!
+hostname RTR454_GIANGDUONG_2800
+!
+boot-start-marker
+boot-end-marker
+!
+logging buffered 51200 warnings
+enable password uneti
+!
+no aaa new-model
+!
+resource policy
+!
+ip subnet-zero
+!
+!
+ip cef
+!
+!
+no ip domain lookup
+ip domain name yourdomain.com
+!
+username cisco privilege 15 secret 5 $1$z.ol$is0C4IulSd0uDuFU7RoHh/
+!
+!
+!
+interface Tunnel0
+ ip address 10.1.0.6 255.255.255.252
+ keepalive 10 3
+ tunnel source Dialer1
+ tunnel destination 118.70.128.125
+!
+interface Loopback0
+ description LOOPBACK_ROUTING
+ ip address 10.0.0.11 255.255.255.255
+!
+interface GigabitEthernet0/0
+ description CSW454_GIANGDUONG_Gi1/0/24
+ ip address 10.1.2.1 255.255.255.252
+  ip nat inside
+ ip tcp adjust-mss 1400
+ ip ospf authentication-key ktcn2015
+ ip ospf network point-to-point
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ description VIETTEL_UPLINK
+ no ip address
+ duplex auto
+ speed auto
+ pppoe enable
+ pppoe-client dial-pool-number 1
+!
+interface Dialer1
+ mtu 1492
+ ip address negotiated
+ ip nat outside
+ encapsulation ppp
+ dialer pool 1
+ dialer-group 1
+ ppp authentication pap callin
+  ppp pap sent-username h004_ftth_dhktktcn password 0 oh0hTH
+ ppp ipcp route default
+!
+router ospf 1
+ log-adjacency-changes
+ auto-cost reference-bandwidth 10000
+ area 0 authentication
+ network 10.0.0.11 0.0.0.0 area 0
+ network 10.1.0.6 0.0.0.0 area 0
+ network 10.1.0.10 0.0.0.0 area 0
+ network 10.1.2.1 0.0.0.0 area 0
+ default-information originate metric-type 1
+!
+ip classless
+ip route 192.168.5.0 255.255.255.0 10.1.0.5 name BACKUP
+!
+ip http server
+ip http access-class 23
+ip http authentication local
+ip http timeout-policy idle 60 life 86400 requests 10000
+ip nat inside source list 100 interface Dialer1 overload
+!
+access-list 23 permit 10.10.10.0 0.0.0.7
+access-list 23 permit any
+access-list 100 permit ip 192.168.0.0 0.0.255.255 any
+access-list 100 permit ip 10.0.252.0 0.0.3.255 any
+access-list 150 permit ip host 10.1.0.5 host 10.1.0.6
+access-list 150 permit ip host 10.1.0.6 host 10.1.0.5
+dialer-list 1 protocol ip permit
+!
+control-plane
+!
+!
+line con 0
+ login local
+line aux 0
+line vty 0 4
+ access-class 23 in
+ privilege level 15
+ password uneti
+ login
+ transport input telnet
+line vty 5 15
+ access-class 23 in
+ privilege level 15
+ password uneti
+  login
+ transport input telnet
+line vty 5 15
+ access-class 23 in
+ privilege level 15
+ password uneti
+ login
+ transport input telnet
+!
+scheduler allocate 20000 1000
+!
+end
+
+
